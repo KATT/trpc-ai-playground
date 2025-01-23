@@ -17,9 +17,15 @@ importers:
       ai:
         specifier: ^4.1.1
         version: 4.1.1(react@19.0.0)(zod@3.24.1)
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.7
       tsx:
         specifier: ^4.19.2
         version: 4.19.2
+      zod:
+        specifier: ^3.24.1
+        version: 3.24.1
     devDependencies:
       prettier:
         specifier: ^3.2.5
@@ -244,6 +250,10 @@ packages:
   diff-match-patch@1.0.5:
     resolution: {integrity: sha512-IayShXAgj/QMXgB0IWmKx+rOPuGMhqm5w6jvFxmVenXKIzRqTAAsbBPT3kWQeGANj3jGgvcvv4yK6SxqYmikgw==}
 
+  dotenv@16.4.7:
+    resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
+    engines: {node: '>=12'}
+
   esbuild@0.23.1:
     resolution: {integrity: sha512-VVNz/9Sa0bs5SELtn3f7qhJCDPCF5oMEl5cO9/SSinpE9hbPVvxbd572HH5AKiP7WD8INO53GgfDDhRjkylHEg==}
     engines: {node: '>=18'}
@@ -455,6 +465,8 @@ snapshots:
   dequal@2.0.3: {}
 
   diff-match-patch@1.0.5: {}
+
+  dotenv@16.4.7: {}
 
   esbuild@0.23.1:
     optionalDependencies:

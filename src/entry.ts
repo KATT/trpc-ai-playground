@@ -1,6 +1,8 @@
 import { anthropic } from '@ai-sdk/anthropic';
 import { streamText } from 'ai';
 
+import './env';
+
 const model = anthropic('claude-3-5-haiku-latest');
 
 async function answerMyQuestion(opts: { prompt: string }) {

@@ -20,7 +20,9 @@
     "@ai-sdk/anthropic": "^1.1.1",
     "@types/node": "^22.10.9",
     "ai": "^4.1.1",
-    "tsx": "^4.19.2"
+    "dotenv": "^16.4.5",
+    "tsx": "^4.19.2",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "prettier": "^3.2.5"
