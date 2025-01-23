@@ -270,15 +270,20 @@ const appRouter = router({
       return res.object;
     }),
 
-  describeImage: llmProcedure
+  // All of them don't support image generation so not using llmProcedure for this one
+  describeImage: publicProcedure
     .input(
       z.object({
         imageUrl: z.string().url(),
       })
     )
     .query(async opts => {
+      const response = await fetch(opts.input.imageUrl);
+      const buffer = await response.arrayBuffer();
+      const base64Image = Buffer.from(buffer).toString('base64');
+
       const { text } = await generateText({
-        model: opts.ctx.model,
+        model: models.record['gpt-4-turbo-preview'],
         system: [
           'You will receive an image.',
           'Please create an alt text for the image.',
@@ -293,7 +298,7 @@ const appRouter = router({
             content: [
               {
                 type: 'image',
-                image: new URL(opts.input.imageUrl),
+                image: base64Image,
               },
             ],
           },
