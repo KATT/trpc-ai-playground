@@ -34,35 +34,37 @@ const client = createTRPCClient<AppRouter>({
   ],
 });
 
-const loading = (() => {
+const spinner = (() => {
   const spinner = ['◜', '◠', '◝', '◞', '◡', '◟'];
   let interval: NodeJS.Timeout | null = null;
 
-  return function start() {
-    if (interval) {
-      throw new Error('Loading spinner is already running');
-    }
-
-    let first = true;
-    let currentIndex = 0;
-    function writeSpinner() {
-      if (!first) {
-        process.stdout.write('\b');
+  return {
+    start() {
+      if (interval) {
+        throw new Error('Loading spinner is already running');
       }
-      process.stdout.write(spinner[currentIndex]!);
-      currentIndex = (currentIndex + 1) % spinner.length;
-      first = false;
-    }
-    writeSpinner();
-    interval = setInterval(writeSpinner, 75);
 
-    return () => {
+      let first = true;
+      let currentIndex = 0;
+      function writeSpinner() {
+        if (!first) {
+          process.stdout.write('\b');
+        }
+        process.stdout.write(spinner[currentIndex]!);
+        currentIndex = (currentIndex + 1) % spinner.length;
+        first = false;
+      }
+      writeSpinner();
+      interval = setInterval(writeSpinner, 75);
+    },
+
+    stop() {
       if (!interval) return;
       clearInterval(interval);
       interval = null;
       process.stdout.write('\b'); // Clear the spinner character
       process.stdout.write('\x1B[?25h'); // Show cursor
-    };
+    },
   };
 })();
 
@@ -79,7 +81,7 @@ async function askDemo() {
         messages.push({ role: 'user', content: question });
 
         process.stdout.write('Response: ');
-        const stopLoading = loading();
+        spinner.start();
         const res = await client.chat.query({
           messages,
           // model: 'lmstudio-default',
@@ -88,7 +90,7 @@ async function askDemo() {
         let allChunks: string[] = [];
 
         for await (const chunk of res) {
-          stopLoading();
+          spinner.stop();
           process.stdout.write(chunk);
           allChunks.push(chunk);
         }
@@ -112,14 +114,14 @@ async function promptDemo() {
 
   process.stdout.write(prompt + '\n');
   process.stdout.write('Response: ');
-  const stopLoading = loading();
+  spinner.start();
   const res = await client.prompt.query({
     prompt,
     // model: 'lmstudio-default',
   });
 
   for await (const chunk of res) {
-    stopLoading();
+    spinner.stop();
     process.stdout.write(chunk);
   }
 }
@@ -128,35 +130,43 @@ async function structuredRecipeDemo() {
   const prompt = 'Give me a recipe for a chocolate cake.';
 
   process.stdout.write(prompt + '\n');
-  const stopLoading = loading();
+  spinner.start();
   const res = await client.recipeObject.query({ prompt });
 
   for await (const chunk of res.loading) {
-    stopLoading();
+    spinner.stop();
     process.stdout.write(chunk);
   }
 
   console.log('\n');
 
-  console.log(inspect(await res.recipe, { depth: null }));
+  spinner.start();
+
+  const recipe = await res.recipe;
+  spinner.stop();
+
+  console.log(inspect(recipe, { depth: null }));
 }
 
 async function structuredRecipeStreamDemo() {
   const prompt = 'Give me a recipe for a chocolate cake.';
 
   process.stdout.write(prompt + '\n');
-  const stopLoading = loading();
+  spinner.start();
   const res = await client.recipeStream.query({ prompt });
 
   for await (const chunk of res.loading) {
-    stopLoading();
+    spinner.stop();
     process.stdout.write(chunk);
   }
 
-  process.stdout.write('\n');
+  process.stdout.write('\n\n');
+
+  spinner.start();
 
   let lastNumberOfLinesToClear = 0;
   for await (const chunk of res.recipe) {
+    spinner.stop();
     // Then we get a bunch of chunks with the actual recipe
     // We need to clear the previous lines to make the output more readable
     if (lastNumberOfLinesToClear > 0) {
@@ -182,9 +192,9 @@ async function sentimentDemo() {
 
   for (const text of texts) {
     process.stdout.write(`Analyzing: "${text}"\n`);
-    const stopLoading = loading();
+    spinner.start();
     const sentiment = await client.sentiment.query({ text });
-    stopLoading();
+    spinner.stop();
     console.log(`Sentiment: ${sentiment}\n`);
   }
 }
@@ -193,9 +203,9 @@ async function usersDemo() {
   const prompt = 'Generate 3 users who work in tech companies';
 
   process.stdout.write(`${prompt}\n`);
-  const stopLoading = loading();
+  spinner.start();
   const users = await client.users.query({ prompt });
-  stopLoading();
+  spinner.stop();
   console.log(inspect(users, { depth: null, colors: true }));
 }
 
@@ -209,14 +219,14 @@ async function imageDemo() {
     process.stdout.write(`Describing image: ${imageUrl}\n`);
 
     process.stdout.write('Description: ');
-    const stopLoading = loading();
+    spinner.start();
     const description = await client.describeImage.query({
       imageUrl,
       model: 'claude-3-5-sonnet-latest',
     });
 
     for await (const chunk of description) {
-      stopLoading();
+      spinner.stop();
       process.stdout.write(chunk);
     }
     process.stdout.write('\n\n');
@@ -227,33 +237,40 @@ async function pdfDemo() {
   const pdfPath = path.join(__dirname, './fixtures/invoice.pdf');
   process.stdout.write(`Extracting data from ${pdfPath}\n`);
 
-  try {
-    const fileContent = readFileSync(pdfPath, 'utf-8');
-    const formData = new FormData();
-    formData.append(
-      'fileContent',
-      new Blob([fileContent], { type: 'application/pdf' }),
-      'invoice.pdf'
-    );
-    formData.append('model', 'claude-3-5-sonnet-latest');
+  const fileContent = readFileSync(pdfPath, 'utf-8');
+  const formData = new FormData();
+  formData.append(
+    'fileContent',
+    new Blob([fileContent], { type: 'application/pdf' }),
+    'invoice.pdf'
+  );
+  // formData.append('model', 'claude-3-5-sonnet-latest');
 
-    const stopLoading = loading();
-    const data = await client.extractInvoice.mutate(formData);
-    stopLoading();
-
-    console.log(inspect(data, { depth: null, colors: true }));
-  } catch (error) {
-    console.error('Error reading or processing file:', error);
-  }
+  spinner.start();
+  const data = await client.extractInvoice.mutate(formData);
+  spinner.stop();
+  console.log(inspect(data, { depth: null, colors: true }));
 }
 
-// await promptDemo();
-// console.log('\n\n');
-await askDemo();
-// console.log('\n\n');
-// await structuredRecipeDemo();
-// await structuredRecipeStreamDemo();
-// await sentimentDemo();
-// await usersDemo();
-// await imageDemo();
-// await pdfDemo();
+try {
+  // await promptDemo();
+  // console.log('\n\n');
+  // await askDemo();
+  // console.log('\n\n');
+  // await structuredRecipeDemo();
+  // console.log('\n\n');
+  await structuredRecipeStreamDemo();
+  // console.log('\n\n');
+  // await sentimentDemo();
+  // console.log('\n\n');
+  // await usersDemo();
+  // console.log('\n\n');
+  // await imageDemo();
+  // console.log('\n\n');
+  // await pdfDemo();
+} catch (error) {
+  console.log('Error:');
+  spinner.stop();
+  console.error(error);
+  process.exit(1);
+}
