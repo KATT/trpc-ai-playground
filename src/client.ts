@@ -27,7 +27,7 @@ async function askDemo() {
         messages.push({ role: 'user', content: question });
 
         process.stdout.write('... ');
-        const res = await client.chat.mutate({
+        const res = await client.chat.query({
           messages,
           model: 'llama-3.2-3b-instruct',
         });
@@ -58,7 +58,7 @@ async function promptDemo() {
 
   process.stdout.write(prompt + '\n');
 
-  const res = await client.prompt.mutate({
+  const res = await client.prompt.query({
     prompt,
     // model: 'llama-3.2-3b-instruct',
   });
@@ -73,11 +73,11 @@ async function structuredRecipeDemo() {
 
   process.stdout.write(prompt + '\n');
 
-  const res = await client.recipe.mutate({ prompt });
+  const res = await client.recipe.query({ prompt });
 
   console.log(inspect(res.recipe, { depth: null }));
 }
 
-// await askDemo();
-// await promptDemo();
+await askDemo();
+await promptDemo();
 await structuredRecipeDemo();

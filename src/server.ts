@@ -44,7 +44,7 @@ const appRouter = router({
         prompt: z.string(),
       })
     )
-    .mutation(opts => {
+    .query(opts => {
       const response = streamText({
         model: modelMap[opts.input.model],
         prompt: opts.input.prompt,
@@ -58,7 +58,7 @@ const appRouter = router({
         messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() })),
       })
     )
-    .mutation(opts => {
+    .query(opts => {
       const response = streamText({
         model: modelMap[opts.input.model],
         messages: [
@@ -75,7 +75,7 @@ const appRouter = router({
       return response.textStream;
     }),
 
-  recipe: llmProcedure.input(z.object({ prompt: z.string() })).mutation(async opts => {
+  recipe: llmProcedure.input(z.object({ prompt: z.string() })).query(async opts => {
     async function getLoading() {
       const loading = streamText({
         model: modelMap[opts.input.model],
