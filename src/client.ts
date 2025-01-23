@@ -29,7 +29,7 @@ async function askDemo() {
         process.stdout.write('... ');
         const res = await client.chat.query({
           messages,
-          model: 'llama-3.2-3b-instruct',
+          // model: 'lmstudio-default',
         });
         process.stdout.write('response:\n');
 
@@ -60,7 +60,7 @@ async function promptDemo() {
 
   const res = await client.prompt.query({
     prompt,
-    // model: 'llama-3.2-3b-instruct',
+    // model: 'lmstudio-default',
   });
 
   for await (const chunk of res) {
@@ -73,13 +73,35 @@ async function structuredRecipeDemo() {
 
   process.stdout.write(prompt + '\n');
 
-  const res = await client.recipe.query({ prompt });
+  const res = await client.recipeObject.query({ prompt });
 
-  console.log(inspect(res.recipe, { depth: null }));
+  for await (const chunk of res.loading) {
+    process.stdout.write(chunk);
+  }
+
+  console.log('\n');
+
+  console.log(inspect(await res.recipe, { depth: null }));
 }
 
-await askDemo();
-console.log('\n\n');
-await promptDemo();
-console.log('\n\n');
-await structuredRecipeDemo();
+async function structuredRecipeStreamDemo() {
+  const prompt = 'Give me a recipe for a chocolate cake.';
+
+  process.stdout.write(prompt + '\n');
+
+  const res = await client.recipeStream.query({ prompt });
+
+  for await (const chunk of res) {
+    console.clear();
+    console.dir(chunk, { depth: null });
+  }
+
+  console.log('\n');
+}
+
+// await promptDemo();
+// console.log('\n\n');
+// await askDemo();
+// console.log('\n\n');
+// await structuredRecipeDemo();
+await structuredRecipeStreamDemo();
