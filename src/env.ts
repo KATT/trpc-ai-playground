@@ -5,6 +5,7 @@ dotenv.config();
 
 export const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
   LMSTUDIO_URL: z.string().url(),
   PORT: z.coerce.number().default(3000),
 });

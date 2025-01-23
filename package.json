@@ -20,6 +20,7 @@
   "packageManager": "pnpm@9.12.2",
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.2",
+    "@ai-sdk/openai": "^1.1.2",
     "@ai-sdk/openai-compatible": "^0.1.2",
     "@trpc/client": "next",
     "@trpc/server": "next",

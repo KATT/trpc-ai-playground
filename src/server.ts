@@ -1,5 +1,6 @@
 import { anthropic } from '@ai-sdk/anthropic';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import { openai } from '@ai-sdk/openai';
 import { initTRPC } from '@trpc/server';
 import { createHTTPServer } from '@trpc/server/adapters/standalone';
 import { generateObject, LanguageModelV1, streamObject, streamText } from 'ai';
@@ -20,6 +21,11 @@ const models = (() => {
     // https://console.anthropic.com/
     'claude-3-5-haiku-latest': anthropic('claude-3-5-haiku-latest'),
     'claude-3-5-sonnet-latest': anthropic('claude-3-5-sonnet-latest'),
+    // Requires `OPENAI_API_KEY`
+    // https://platform.openai.com/
+    'gpt-4-turbo-preview': openai('gpt-4-turbo-preview'),
+    'gpt-4': openai('gpt-4'),
+    'gpt-3.5-turbo': openai('gpt-3.5-turbo'),
     // Requires LMStudio installed and running (free)
     // https://lmstudio.ai/
     'lmstudio-default': lmstudio(''),
