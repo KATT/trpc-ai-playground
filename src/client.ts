@@ -165,7 +165,10 @@ async function imageDemo() {
 
   for (const imageUrl of imageUrls) {
     process.stdout.write(`Describing image: ${imageUrl}\n`);
-    const description = await client.describeImage.query({ imageUrl });
+    const description = await client.describeImage.query({
+      imageUrl,
+      model: 'claude-3-5-sonnet-latest',
+    });
     console.log(`Description: ${description}\n`);
   }
 }
@@ -200,5 +203,5 @@ async function pdfDemo() {
 // await structuredRecipeStreamDemo();
 // await sentimentDemo();
 // await usersDemo();
-// await imageDemo();
-await pdfDemo();
+await imageDemo();
+// await pdfDemo();
