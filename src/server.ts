@@ -2,7 +2,7 @@ import { anthropic } from '@ai-sdk/anthropic';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { initTRPC } from '@trpc/server';
 import { createHTTPServer } from '@trpc/server/adapters/standalone';
-import { LanguageModelV1, streamText } from 'ai';
+import { generateObject, LanguageModelV1, streamText } from 'ai';
 import { z } from 'zod';
 import { env } from './env';
 
@@ -74,6 +74,53 @@ const appRouter = router({
 
       return response.textStream;
     }),
+
+  recipe: llmProcedure.input(z.object({ prompt: z.string() })).mutation(async opts => {
+    async function getLoading() {
+      const loading = streamText({
+        model: modelMap[opts.input.model],
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a helpful assistant that generates recipes. You are just going to give a short message here while a longer LLM is running to generate the actual recipe. Just 1 line is enough while loading',
+          },
+          { role: 'user', content: opts.input.prompt },
+        ],
+      });
+
+      return loading.textStream;
+    }
+
+    async function getRecipe() {
+      const schema = z.object({
+        recipe: z.object({
+          name: z.string(),
+          ingredients: z.array(
+            z.object({
+              name: z.string(),
+              amount: z.string(),
+            })
+          ),
+          steps: z.array(z.string()),
+        }),
+      });
+
+      const res = await generateObject({
+        model: modelMap[opts.input.model],
+        schema,
+        prompt: opts.input.prompt,
+      });
+
+      return res.object;
+    }
+
+    return {
+      // doesn't work right now
+      // loading: getLoading(),
+      recipe: await getRecipe(),
+    };
+  }),
 });
 
 // Export type definition of API

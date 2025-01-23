@@ -1,6 +1,7 @@
 import { createTRPCClient, unstable_httpBatchStreamLink } from '@trpc/client';
 import { inferRouterInputs } from '@trpc/server';
 import type { AppRouter } from './server';
+import { inspect } from 'util';
 
 type Inputs = inferRouterInputs<AppRouter>;
 
@@ -67,4 +68,16 @@ async function promptDemo() {
   }
 }
 
-await promptDemo();
+async function structuredRecipeDemo() {
+  const prompt = 'Give me a recipe for a chocolate cake.';
+
+  process.stdout.write(prompt + '\n');
+
+  const res = await client.recipe.mutate({ prompt });
+
+  console.log(inspect(res.recipe, { depth: null }));
+}
+
+// await askDemo();
+// await promptDemo();
+await structuredRecipeDemo();
