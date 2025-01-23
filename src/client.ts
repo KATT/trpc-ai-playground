@@ -115,9 +115,24 @@ async function structuredRecipeStreamDemo() {
   console.log('\n');
 }
 
+async function sentimentDemo() {
+  const texts = [
+    "I absolutely love this product! It's amazing!",
+    'This is the worst experience ever.',
+    'The weather is quite normal today.',
+  ];
+
+  for (const text of texts) {
+    process.stdout.write(`Analyzing: "${text}"\n`);
+    const sentiment = await client.sentiment.query({ text });
+    console.log(`Sentiment: ${sentiment}\n`);
+  }
+}
+
 // await promptDemo();
 // console.log('\n\n');
 // await askDemo();
 // console.log('\n\n');
 // await structuredRecipeDemo();
-await structuredRecipeStreamDemo();
+// await structuredRecipeStreamDemo();
+await sentimentDemo();

@@ -207,6 +207,18 @@ const appRouter = router({
       }),
     };
   }),
+
+  sentiment: llmProcedure.input(z.object({ text: z.string() })).query(async opts => {
+    const res = await generateObject({
+      model: opts.ctx.model,
+      output: 'enum',
+      enum: ['positive', 'negative', 'neutral'],
+      prompt: opts.input.text,
+      system: 'Classify the sentiment of the text as either positive, negative, or neutral.',
+    });
+
+    return res.object;
+  }),
 });
 
 // Export type definition of API
