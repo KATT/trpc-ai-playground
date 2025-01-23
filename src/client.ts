@@ -269,7 +269,6 @@ try {
   // console.log('\n----\n');
   // await pdfParsingDemo();
 } catch (error) {
-  spinner.stop();
   console.error(error);
   process.exit(1);
 }

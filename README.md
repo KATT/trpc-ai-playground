@@ -1,10 +1,13 @@
 # AI Playground with Vercel AI SDK
 
-A project following [Matt Pocock's Vercel AI SDK Tutorial](https://www.aihero.dev/structured-data-from-pdfs-with-vercel-ai-sdk?list=vercel-ai-sdk-tutorial), implementing various AI features using a tRPC server and streaming responses.
+A project following [Matt Pocock's Vercel AI SDK Tutorial](https://www.aihero.dev/structured-data-from-pdfs-with-vercel-ai-sdk?list=vercel-ai-sdk-tutorial), implementing various AI features using a tRPC server and streaming responses to a client.
 
 ![Demo GIF](./demo.gif)
 
-## Key Files
+- tRPC server with AI procedures using Vercel's AI SDK
+- tRPC client for calling AI procedures
+
+## Files
 
 - [`src/server.ts`](./src/server.ts) - tRPC server with AI procedures
 - [`src/client.ts`](./src/client.ts) - CLI client for testing endpoints
@@ -13,7 +16,7 @@ A project following [Matt Pocock's Vercel AI SDK Tutorial](https://www.aihero.de
 
 ## Features
 
-> Note: Not all features may work with every model. Some features like image description require specific model capabilities.
+> Note: Not all features may work with every model.
 
 Uncomment the one you want to play with at the bottom of [src/client.ts](./src/client.ts).
 
@@ -34,6 +37,12 @@ pnpm install
 1. Copy `.env.example` to `.env` and fill in your API keys.
 2. Run the server: `pnpm dev:server`
 3. Run the client: `pnpm dev:client`
+
+> [!NOTE]
+>
+> Ensure your use the workspace's version of TypeScript.
+>
+> `CMD+SHIFT+P` → `TypeScript: Select TypeScript Version` → `Use Workspace Version`
 
 ## Available Models
 

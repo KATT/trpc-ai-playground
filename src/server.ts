@@ -137,6 +137,9 @@ const appRouter = router({
 
           return loading.textStream;
         }),
+        /**
+         * The actual recipe as structured data, kinda slow
+         */
         recipe: run(async () => {
           const schema = z.object({
             recipe: z.object({
