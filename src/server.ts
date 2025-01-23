@@ -30,16 +30,35 @@ const t = initTRPC.context<Record<string, unknown>>().create();
 const router = t.router;
 const publicProcedure = t.procedure;
 
+const llmProcedure = publicProcedure.input(
+  z.object({
+    model: modelSchema.default('claude-3-5-haiku-latest'),
+  })
+);
+
 // Define routes
 const appRouter = router({
-  chat: publicProcedure
+  prompt: llmProcedure
     .input(
       z.object({
-        model: modelSchema.default('claude-3-5-haiku-latest'),
+        prompt: z.string(),
+      })
+    )
+    .mutation(opts => {
+      const response = streamText({
+        model: modelMap[opts.input.model],
+        prompt: opts.input.prompt,
+      });
+
+      return response.textStream;
+    }),
+  chat: llmProcedure
+    .input(
+      z.object({
         messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() })),
       })
     )
-    .mutation(async opts => {
+    .mutation(opts => {
       const response = streamText({
         model: modelMap[opts.input.model],
         messages: [
