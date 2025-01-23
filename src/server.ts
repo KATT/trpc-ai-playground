@@ -1,4 +1,5 @@
 import { anthropic } from '@ai-sdk/anthropic';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { initTRPC } from '@trpc/server';
 import { createHTTPServer } from '@trpc/server/adapters/standalone';
 import { LanguageModelV1, streamText } from 'ai';
@@ -6,13 +7,23 @@ import { z } from 'zod';
 import { env } from './env';
 
 // Available models
-const modelEnum = z.enum(['claude-3-5-haiku-latest', 'claude-3-5-sonnet-latest']);
-type Model = z.infer<typeof modelEnum>;
 
-const modelMap: Record<Model, LanguageModelV1> = {
+const lmstudio = createOpenAICompatible({
+  name: 'lmstudio',
+  baseURL: `http://localhost:1234/v1`,
+});
+
+const modelMap = {
   'claude-3-5-haiku-latest': anthropic('claude-3-5-haiku-latest'),
   'claude-3-5-sonnet-latest': anthropic('claude-3-5-sonnet-latest'),
-};
+  'llama-3.2-3b-instruct': lmstudio('llama-3.2-3b-instruct'),
+} as const satisfies Record<string, LanguageModelV1>;
+
+function zodEnumFromObjKeys<K extends string>(obj: Record<K, any>): z.ZodEnum<[K, ...K[]]> {
+  return z.enum(Object.keys(obj) as [K, ...K[]]);
+}
+
+const modelSchema = zodEnumFromObjKeys(modelMap);
 
 // Initialize tRPC
 const t = initTRPC.context<Record<string, unknown>>().create();
@@ -24,7 +35,7 @@ const appRouter = router({
   chat: publicProcedure
     .input(
       z.object({
-        model: modelEnum.default('claude-3-5-haiku-latest'),
+        model: modelSchema.default('claude-3-5-haiku-latest'),
         messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() })),
       })
     )
@@ -33,7 +44,11 @@ const appRouter = router({
         model: modelMap[opts.input.model],
         messages: [
           // System prompt
-          { role: 'system', content: 'You respond short riddles without answer or clues' },
+          {
+            role: 'system',
+            content:
+              'You respond short riddles without answer or clues. Add an explanation of the riddle after',
+          },
           ...opts.input.messages,
         ],
       });
