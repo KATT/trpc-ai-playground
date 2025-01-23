@@ -169,7 +169,11 @@ async function imageDemo() {
       imageUrl,
       model: 'claude-3-5-sonnet-latest',
     });
-    console.log(`Description: ${description}\n`);
+    process.stdout.write('Description: ');
+    for await (const chunk of description) {
+      process.stdout.write(chunk);
+    }
+    process.stdout.write('\n\n');
   }
 }
 

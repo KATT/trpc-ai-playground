@@ -279,11 +279,7 @@ const appRouter = router({
       })
     )
     .query(async opts => {
-      const response = await fetch(opts.input.imageUrl);
-      const buffer = await response.arrayBuffer();
-      const base64Image = Buffer.from(buffer).toString('base64');
-
-      const { text } = await generateText({
+      const res = streamText({
         model: opts.ctx.model,
         system: [
           'You will receive an image.',
@@ -299,14 +295,14 @@ const appRouter = router({
             content: [
               {
                 type: 'image',
-                image: base64Image,
+                image: new URL(opts.input.imageUrl),
               },
             ],
           },
         ],
       });
 
-      return text;
+      return res.textStream;
     }),
 
   extractInvoice: publicProcedure
