@@ -137,6 +137,19 @@ async function usersDemo() {
   console.log(inspect(users, { depth: null, colors: true }));
 }
 
+async function imageDemo() {
+  const imageUrls = [
+    'https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?q=80&w=2070&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=2070&auto=format&fit=crop',
+  ];
+
+  for (const imageUrl of imageUrls) {
+    process.stdout.write(`Describing image: ${imageUrl}\n`);
+    const description = await client.describeImage.query({ imageUrl });
+    console.log(`Description: ${description}\n`);
+  }
+}
+
 // await promptDemo();
 // console.log('\n\n');
 // await askDemo();
@@ -144,4 +157,5 @@ async function usersDemo() {
 // await structuredRecipeDemo();
 // await structuredRecipeStreamDemo();
 // await sentimentDemo();
-await usersDemo();
+// await usersDemo();
+await imageDemo();

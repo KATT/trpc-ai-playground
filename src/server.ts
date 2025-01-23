@@ -3,7 +3,7 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { openai } from '@ai-sdk/openai';
 import { initTRPC } from '@trpc/server';
 import { createHTTPServer } from '@trpc/server/adapters/standalone';
-import { generateObject, LanguageModelV1, streamObject, streamText } from 'ai';
+import { generateObject, generateText, LanguageModelV1, streamObject, streamText } from 'ai';
 import { z } from 'zod';
 import { env } from './env';
 
@@ -81,7 +81,12 @@ const appRouter = router({
   chat: llmProcedure
     .input(
       z.object({
-        messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() })),
+        messages: z.array(
+          z.object({
+            role: z.enum(['user', 'assistant']),
+            content: z.string(),
+          })
+        ),
       })
     )
     .query(opts => {
@@ -101,145 +106,202 @@ const appRouter = router({
       return response.textStream;
     }),
 
-  recipeObject: llmProcedure.input(z.object({ prompt: z.string() })).query(async opts => {
-    return {
-      /**
-       * A nice loading message while the full recipe is being generated
-       */
-      loading: run(() => {
-        const loading = streamText({
-          model: opts.ctx.model,
-          messages: [
-            {
-              role: 'system',
-              content: [
-                'You are a helpful assistant that generates recipes.',
-                'You are just going to give a short message here while a longer LLM is running to generate the actual recipe.',
-                'Just 1 line is enough while loading',
-                'Emojis are fun!',
-              ].join('\n'),
-            },
-            { role: 'user', content: opts.input.prompt },
-          ],
-        });
+  recipeObject: llmProcedure
+    .input(
+      z.object({
+        prompt: z.string(),
+      })
+    )
+    .query(async opts => {
+      return {
+        /**
+         * A nice loading message while the full recipe is being generated
+         */
+        loading: run(() => {
+          const loading = streamText({
+            model: opts.ctx.model,
+            messages: [
+              {
+                role: 'system',
+                content: [
+                  'You are a helpful assistant that generates recipes.',
+                  'You are just going to give a short message here while a longer LLM is running to generate the actual recipe.',
+                  'Just 1 line is enough while loading',
+                  'Emojis are fun!',
+                ].join('\n'),
+              },
+              { role: 'user', content: opts.input.prompt },
+            ],
+          });
 
-        return loading.textStream;
-      }),
-      recipe: run(async () => {
-        const schema = z.object({
-          recipe: z.object({
-            name: z.string(),
-            ingredients: z.array(
-              z.object({
-                name: z.string(),
-                amount: z.string(),
-              })
-            ),
-            steps: z.array(z.string()),
-          }),
-        });
+          return loading.textStream;
+        }),
+        recipe: run(async () => {
+          const schema = z.object({
+            recipe: z.object({
+              name: z.string(),
+              ingredients: z.array(
+                z.object({
+                  name: z.string(),
+                  amount: z.string(),
+                })
+              ),
+              steps: z.array(z.string()),
+            }),
+          });
 
-        const res = await generateObject({
-          model: opts.ctx.model,
-          schema,
-          prompt: opts.input.prompt,
-          system: 'You are a helpful assistant that generates recipes.',
-        });
+          const res = await generateObject({
+            model: opts.ctx.model,
+            schema,
+            prompt: opts.input.prompt,
+            system: 'You are a helpful assistant that generates recipes.',
+          });
 
-        return res.object;
-      }),
-    };
-  }),
+          return res.object;
+        }),
+      };
+    }),
 
-  recipeStream: llmProcedure.input(z.object({ prompt: z.string() })).query(async opts => {
-    return {
-      /**
-       * A nice loading message while the full recipe is being generated
-       */
-      loading: run(() => {
-        const loading = streamText({
-          model: opts.ctx.model,
-          messages: [
-            {
-              role: 'system',
-              content: [
-                'You are a helpful assistant that generates recipes.',
-                'You are just going to give a short message here while a longer LLM is running to generate the actual recipe.',
-                'Just 1 line is enough while loading',
-                'Emojis are fun!',
-              ].join('\n'),
-            },
-            { role: 'user', content: opts.input.prompt },
-          ],
-        });
-        return loading.textStream;
-      }),
-      recipe: run(async function* () {
-        const schema = z.object({
-          recipe: z.object({
-            name: z.string(),
-            ingredients: z.array(
-              z.object({
-                name: z.string(),
-                amount: z.string(),
-              })
-            ),
-            steps: z.array(z.string()),
-          }),
-        });
-        const stream = streamObject({
-          model: opts.ctx.model,
-          schema,
-          prompt: opts.input.prompt,
-          system: 'You are a helpful assistant that generates recipes.',
-        });
+  recipeStream: llmProcedure
+    .input(
+      z.object({
+        prompt: z.string(),
+      })
+    )
+    .query(async opts => {
+      return {
+        /**
+         * A nice loading message while the full recipe is being generated
+         */
+        loading: run(() => {
+          const loading = streamText({
+            model: opts.ctx.model,
+            messages: [
+              {
+                role: 'system',
+                content: [
+                  'You are a helpful assistant that generates recipes.',
+                  'You are just going to give a short message here while a longer LLM is running to generate the actual recipe.',
+                  'Just 1 line is enough while loading',
+                  'Emojis are fun!',
+                ].join('\n'),
+              },
+              { role: 'user', content: opts.input.prompt },
+            ],
+          });
+          return loading.textStream;
+        }),
+        recipe: run(async function* () {
+          const schema = z.object({
+            recipe: z.object({
+              name: z.string(),
+              ingredients: z.array(
+                z.object({
+                  name: z.string(),
+                  amount: z.string(),
+                })
+              ),
+              steps: z.array(z.string()),
+            }),
+          });
+          const stream = streamObject({
+            model: opts.ctx.model,
+            schema,
+            prompt: opts.input.prompt,
+            system: 'You are a helpful assistant that generates recipes.',
+          });
 
-        for await (const chunk of stream.partialObjectStream) {
-          // console.log({
-          //   name: chunk.recipe?.name,
-          //   ingredients: chunk.recipe?.ingredients?.length ?? 0,
-          //   steps: chunk.recipe?.steps?.length ?? 0,
-          // });
-          // Adds artificial delay to make the progress more readable
-          await new Promise(resolve => setTimeout(resolve, 10));
-          yield chunk;
-        }
-      }),
-    };
-  }),
+          for await (const chunk of stream.partialObjectStream) {
+            // console.log({
+            //   name: chunk.recipe?.name,
+            //   ingredients: chunk.recipe?.ingredients?.length ?? 0,
+            //   steps: chunk.recipe?.steps?.length ?? 0,
+            // });
+            // Adds artificial delay to make the progress more readable
+            await new Promise(resolve => setTimeout(resolve, 10));
+            yield chunk;
+          }
+        }),
+      };
+    }),
 
-  sentiment: llmProcedure.input(z.object({ text: z.string() })).query(async opts => {
-    const res = await generateObject({
-      model: opts.ctx.model,
-      output: 'enum',
-      enum: ['positive', 'negative', 'neutral'],
-      prompt: opts.input.text,
-      system: 'Classify the sentiment of the text as either positive, negative, or neutral.',
-    });
+  sentiment: llmProcedure
+    .input(
+      z.object({
+        text: z.string(),
+      })
+    )
+    .query(async opts => {
+      const res = await generateObject({
+        model: opts.ctx.model,
+        output: 'enum',
+        enum: ['positive', 'negative', 'neutral'],
+        prompt: opts.input.text,
+        system: 'Classify the sentiment of the text as either positive, negative, or neutral.',
+      });
 
-    return res.object;
-  }),
+      return res.object;
+    }),
 
-  users: llmProcedure.input(z.object({ prompt: z.string() })).query(async opts => {
-    const userSchema = z.object({
-      name: z.string().describe('Full name of the user'),
-      age: z.number().describe('Age of the user between 18 and 80'),
-      email: z.string().email().describe('A valid email address'),
-      occupation: z.string().describe("The user's job or profession"),
-      city: z.string().describe('A city in the UK'),
-    });
+  users: llmProcedure
+    .input(
+      z.object({
+        prompt: z.string(),
+      })
+    )
+    .query(async opts => {
+      const userSchema = z.object({
+        name: z.string().describe('Full name of the user'),
+        age: z.number().describe('Age of the user between 18 and 80'),
+        email: z.string().email().describe('A valid email address'),
+        occupation: z.string().describe("The user's job or profession"),
+        city: z.string().describe('A city in the UK'),
+      });
 
-    const res = await generateObject({
-      model: opts.ctx.model,
-      schema: userSchema,
-      output: 'array',
-      prompt: opts.input.prompt,
-      system:
-        'You are generating realistic fake user data for UK residents. Create diverse, believable profiles.',
-    });
+      const res = await generateObject({
+        model: opts.ctx.model,
+        schema: userSchema,
+        output: 'array',
+        prompt: opts.input.prompt,
+        system:
+          'You are generating realistic fake user data for UK residents. Create diverse, believable profiles.',
+      });
 
-    return res.object;
-  }),
+      return res.object;
+    }),
+
+  describeImage: llmProcedure
+    .input(
+      z.object({
+        imageUrl: z.string().url(),
+      })
+    )
+    .query(async opts => {
+      const { text } = await generateText({
+        model: opts.ctx.model,
+        system: [
+          'You will receive an image.',
+          'Please create an alt text for the image.',
+          'Be concise.',
+          'Use adjectives only when necessary.',
+          'Do not pass 160 characters.',
+          'Use simple language.',
+        ].join(' '),
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                image: new URL(opts.input.imageUrl),
+              },
+            ],
+          },
+        ],
+      });
+
+      return text;
+    }),
 });
 
 // Export type definition of API
