@@ -199,7 +199,7 @@ async function sentimentDemo() {
   }
 }
 
-async function usersDemo() {
+async function usersFixtureDataDemo() {
   const prompt = 'Generate 3 users who work in tech companies';
 
   process.stdout.write(`${prompt}\n`);
@@ -209,7 +209,7 @@ async function usersDemo() {
   console.log(inspect(users, { depth: null, colors: true }));
 }
 
-async function imageDemo() {
+async function imageDescriptionDemo() {
   const imageUrls = [
     'https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?q=80&w=2070&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=2070&auto=format&fit=crop',
@@ -233,7 +233,7 @@ async function imageDemo() {
   }
 }
 
-async function pdfDemo() {
+async function pdfParsingDemo() {
   const pdfPath = path.join(__dirname, './fixtures/invoice.pdf');
   process.stdout.write(`Extracting data from ${pdfPath}\n`);
 
@@ -244,7 +244,7 @@ async function pdfDemo() {
     new Blob([fileContent], { type: 'application/pdf' }),
     'invoice.pdf'
   );
-  // formData.append('model', 'claude-3-5-sonnet-latest');
+  formData.append('model', 'claude-3-5-sonnet-latest');
 
   spinner.start();
   const data = await client.extractInvoice.mutate(formData);
@@ -254,20 +254,20 @@ async function pdfDemo() {
 
 try {
   // await promptDemo();
-  // console.log('\n\n');
+  // console.log('\n----\n');
   // await askDemo();
-  // console.log('\n\n');
+  // console.log('\n----\n');
   // await structuredRecipeDemo();
-  // console.log('\n\n');
+  // console.log('\n----\n');
   await structuredRecipeStreamDemo();
-  // console.log('\n\n');
+  // console.log('\n----\n');
   // await sentimentDemo();
-  // console.log('\n\n');
-  // await usersDemo();
-  // console.log('\n\n');
-  // await imageDemo();
-  // console.log('\n\n');
-  // await pdfDemo();
+  // console.log('\n----\n');
+  // await usersFixtureDataDemo();
+  // console.log('\n----\n');
+  // await imageDescriptionDemo();
+  // console.log('\n----\n');
+  // await pdfParsingDemo();
 } catch (error) {
   console.log('Error:');
   spinner.stop();
