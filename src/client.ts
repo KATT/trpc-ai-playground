@@ -34,6 +34,38 @@ const client = createTRPCClient<AppRouter>({
   ],
 });
 
+const loading = (() => {
+  const spinner = ['◜', '◠', '◝', '◞', '◡', '◟'];
+  let interval: NodeJS.Timeout | null = null;
+
+  return function start() {
+    if (interval) {
+      throw new Error('Loading spinner is already running');
+    }
+
+    let first = true;
+    let currentIndex = 0;
+    function writeSpinner() {
+      if (!first) {
+        process.stdout.write('\b');
+      }
+      process.stdout.write(spinner[currentIndex]!);
+      currentIndex = (currentIndex + 1) % spinner.length;
+      first = false;
+    }
+    writeSpinner();
+    interval = setInterval(writeSpinner, 75);
+
+    return () => {
+      if (!interval) return;
+      clearInterval(interval);
+      interval = null;
+      process.stdout.write('\b'); // Clear the spinner character
+      process.stdout.write('\x1B[?25h'); // Show cursor
+    };
+  };
+})();
+
 async function askDemo() {
   const chat = (function () {
     /**
@@ -74,38 +106,6 @@ async function askDemo() {
   await chat.ask('What is the capital of the UK?');
   await chat.ask('Summarize the conversation so far.');
 }
-
-const loading = (() => {
-  const spinner = ['◜', '◠', '◝', '◞', '◡', '◟'];
-  let interval: NodeJS.Timeout | null = null;
-
-  return function start() {
-    if (interval) {
-      throw new Error('Loading spinner is already running');
-    }
-
-    let first = true;
-    let currentIndex = 0;
-    function writeSpinner() {
-      if (!first) {
-        process.stdout.write('\b');
-      }
-      process.stdout.write(spinner[currentIndex]!);
-      currentIndex = (currentIndex + 1) % spinner.length;
-      first = false;
-    }
-    writeSpinner();
-    interval = setInterval(writeSpinner, 75);
-
-    return () => {
-      if (!interval) return;
-      clearInterval(interval);
-      interval = null;
-      process.stdout.write('\b'); // Clear the spinner character
-      process.stdout.write('\x1B[?25h'); // Show cursor
-    };
-  };
-})();
 
 async function promptDemo() {
   const prompt = 'What is the capital of France? Give a really long-winded answer.';
