@@ -1,14 +1,14 @@
 # AI Playground with Vercel AI SDK
 
-A project following [Matt Pocock's Vercel AI SDK Tutorial](https://www.aihero.dev/structured-data-from-pdfs-with-vercel-ai-sdk?list=vercel-ai-sdk-tutorial), implementing various AI features using tRPC and streaming responses.
+A project following [Matt Pocock's Vercel AI SDK Tutorial](https://www.aihero.dev/structured-data-from-pdfs-with-vercel-ai-sdk?list=vercel-ai-sdk-tutorial), implementing various AI features using a tRPC server and streaming responses.
 
 ![Demo GIF](./demo.gif)
 
 ## Key Files
 
-- [src/server.ts](./src/server.ts) - tRPC server with AI procedures
-- [src/client.ts](./src/client.ts) - CLI client for testing endpoints
-- [src/env.ts](./src/env.ts) - Environment configuration
+- [`src/server.ts`](./src/server.ts) - tRPC server with AI procedures
+- [`src/client.ts`](./src/client.ts) - CLI client for testing endpoints
+- [`src/env.ts`](./src/env.ts) - Environment configuration
 - `.env` - Environment variables (copy from [.env.example](./.env.example))
 
 ## Features
