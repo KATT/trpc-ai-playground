@@ -1,12 +1,18 @@
 import { anthropic } from '@ai-sdk/anthropic';
 import { initTRPC } from '@trpc/server';
 import { createHTTPServer } from '@trpc/server/adapters/standalone';
-import { streamText } from 'ai';
+import { LanguageModelV1, streamText } from 'ai';
 import { z } from 'zod';
 import { env } from './env';
 
-// Initialize model
-const model = anthropic('claude-3-5-haiku-latest');
+// Available models
+const modelEnum = z.enum(['claude-3-5-haiku-latest', 'claude-3-5-sonnet-latest']);
+type Model = z.infer<typeof modelEnum>;
+
+const modelMap: Record<Model, LanguageModelV1> = {
+  'claude-3-5-haiku-latest': anthropic('claude-3-5-haiku-latest'),
+  'claude-3-5-sonnet-latest': anthropic('claude-3-5-sonnet-latest'),
+};
 
 // Initialize tRPC
 const t = initTRPC.context<Record<string, unknown>>().create();
@@ -18,12 +24,13 @@ const appRouter = router({
   chat: publicProcedure
     .input(
       z.object({
+        model: modelEnum.default('claude-3-5-haiku-latest'),
         messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() })),
       })
     )
     .mutation(async opts => {
       const response = streamText({
-        model,
+        model: modelMap[opts.input.model],
         messages: [
           // System prompt
           { role: 'system', content: 'You respond short riddles without answer or clues' },

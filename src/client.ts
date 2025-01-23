@@ -27,6 +27,7 @@ const chat = (function () {
       process.stdout.write('... ');
       const res = await client.chat.mutate({
         messages,
+        // model: 'claude-3-5-sonnet-latest',
       });
       process.stdout.write('response:\n');
 
