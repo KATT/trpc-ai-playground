@@ -1,15 +1,35 @@
-import { createTRPCClient, unstable_httpBatchStreamLink } from '@trpc/client';
+import {
+  createTRPCClient,
+  httpLink,
+  isNonJsonSerializable,
+  splitLink,
+  unstable_httpBatchStreamLink,
+} from '@trpc/client';
 import { inferRouterInputs } from '@trpc/server';
 import type { AppRouter } from './server';
 import { inspect } from 'util';
+import { readFileSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 type Inputs = inferRouterInputs<AppRouter>;
 
 // Initialize tRPC client
+const url = `http://localhost:${process.env['PORT'] || 3000}`;
 const client = createTRPCClient<AppRouter>({
   links: [
-    unstable_httpBatchStreamLink({
-      url: `http://localhost:${process.env['PORT'] || 3000}`,
+    splitLink({
+      condition: op => isNonJsonSerializable(op.input),
+      true: httpLink({
+        url,
+      }),
+      false: unstable_httpBatchStreamLink({
+        url,
+      }),
     }),
   ],
 });
@@ -150,6 +170,28 @@ async function imageDemo() {
   }
 }
 
+async function pdfDemo() {
+  const pdfPath = path.join(__dirname, './fixtures/invoice.pdf');
+  process.stdout.write(`Extracting data from ${pdfPath}\n`);
+
+  try {
+    const fileContent = readFileSync(pdfPath, 'utf-8');
+    const formData = new FormData();
+    formData.append(
+      'fileContent',
+      new Blob([fileContent], { type: 'application/pdf' }),
+      'invoice.pdf'
+    );
+    formData.append('model', 'claude-3-5-sonnet-latest');
+
+    const data = await client.extractInvoice.mutate(formData);
+
+    console.log(inspect(data, { depth: null, colors: true }));
+  } catch (error) {
+    console.error('Error reading or processing file:', error);
+  }
+}
+
 // await promptDemo();
 // console.log('\n\n');
 // await askDemo();
@@ -158,4 +200,5 @@ async function imageDemo() {
 // await structuredRecipeStreamDemo();
 // await sentimentDemo();
 // await usersDemo();
-await imageDemo();
+// await imageDemo();
+await pdfDemo();

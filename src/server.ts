@@ -5,6 +5,7 @@ import { initTRPC } from '@trpc/server';
 import { createHTTPServer } from '@trpc/server/adapters/standalone';
 import { generateObject, generateText, LanguageModelV1, streamObject, streamText } from 'ai';
 import { z } from 'zod';
+import { zfd } from 'zod-form-data';
 import { env } from './env';
 
 const run = <T>(fn: () => T) => fn();
@@ -35,7 +36,7 @@ const models = (() => {
     return z.enum(Object.keys(obj) as [K, ...K[]]);
   }
 
-  const schema = zodEnumFromObjKeys(record);
+  const schema = zodEnumFromObjKeys(record).default('claude-3-5-haiku-latest');
 
   return {
     schema,
@@ -51,7 +52,7 @@ const publicProcedure = t.procedure;
 const llmProcedure = publicProcedure
   .input(
     z.object({
-      model: models.schema.default('claude-3-5-haiku-latest'),
+      model: models.schema,
     })
   )
   .use(opts => {
@@ -306,6 +307,57 @@ const appRouter = router({
       });
 
       return text;
+    }),
+
+  extractInvoice: publicProcedure
+    .input(
+      zfd.formData({
+        fileContent: zfd.file(),
+        model: models.schema,
+      })
+    )
+    .use(opts => {
+      return opts.next({
+        ctx: {
+          model: models.record[opts.input.model],
+        },
+      });
+    })
+    .mutation(async opts => {
+      const schema = z
+        .object({
+          total: z.number().describe('The total amount of the invoice.'),
+          currency: z.string().describe('The currency of the total amount.'),
+          invoiceNumber: z.string().describe('The invoice number.'),
+          companyAddress: z
+            .string()
+            .describe('The address of the company or person issuing the invoice.'),
+          companyName: z.string().describe('The name of the company issuing the invoice.'),
+          invoiceeAddress: z
+            .string()
+            .describe('The address of the company or person receiving the invoice.'),
+        })
+        .describe('The extracted data from the invoice.');
+
+      const res = await generateObject({
+        model: opts.ctx.model,
+        schema,
+        system: 'You will receive an invoice. Please extract the data from the invoice.',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'file',
+                data: await opts.input.fileContent.arrayBuffer(),
+                mimeType: opts.input.fileContent.type,
+              },
+            ],
+          },
+        ],
+      });
+
+      return res.object;
     }),
 });
 
