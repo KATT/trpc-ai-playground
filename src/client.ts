@@ -14,6 +14,9 @@ const client = createTRPCClient<AppRouter>({
 });
 
 const chat = (function () {
+  /**
+   * Client holds state of the chat and passes it to the server on each request
+   */
   const messages: Inputs['chat']['messages'] = [];
 
   return {
