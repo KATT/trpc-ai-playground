@@ -1,22 +1,19 @@
-import { anthropic } from '@ai-sdk/anthropic';
-import { streamText } from 'ai';
+import { createTRPCClient, unstable_httpBatchStreamLink } from '@trpc/client';
+import type { AppRouter } from './server';
 
-import './env';
+// Initialize tRPC client
+const client = createTRPCClient<AppRouter>({
+  links: [
+    unstable_httpBatchStreamLink({
+      url: `http://localhost:${process.env['PORT'] || 3000}`,
+    }),
+  ],
+});
 
-const model = anthropic('claude-3-5-haiku-latest');
-
-async function answerMyQuestion(opts: { prompt: string }) {
-  const response = streamText({
-    model,
-    prompt: opts.prompt,
-  });
-  return response;
-}
-
-const res = await answerMyQuestion({
+const res = await client.chat.mutate({
   prompt: 'What is the capital of France?',
 });
 
-for await (const chunk of res.textStream) {
+for await (const chunk of res) {
   process.stdout.write(chunk);
 }

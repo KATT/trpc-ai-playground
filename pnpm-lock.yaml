@@ -11,6 +11,9 @@ importers:
       '@ai-sdk/anthropic':
         specifier: ^1.1.1
         version: 1.1.1(zod@3.24.1)
+      '@trpc/client':
+        specifier: next
+        version: 11.0.0-rc.716(@trpc/server@11.0.0-rc.716(typescript@5.7.3))(typescript@5.7.3)
       '@trpc/server':
         specifier: next
         version: 11.0.0-rc.716(typescript@5.7.3)
@@ -32,6 +35,9 @@ importers:
       tsx:
         specifier: ^4.19.2
         version: 4.19.2
+      typescript:
+        specifier: ^5.7.3
+        version: 5.7.3
       zod:
         specifier: ^3.24.1
         version: 3.24.1
@@ -229,6 +235,12 @@ packages:
   '@opentelemetry/api@1.9.0':
     resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
     engines: {node: '>=8.0.0'}
+
+  '@trpc/client@11.0.0-rc.716':
+    resolution: {integrity: sha512-wTGtUAWgkopG9SldHQFmsV6XYJOJ/LK3JRlovbdQdcmoyk39fJCf9moL1tMQiAFUuf7j6LSb7ElWdzldhfeBYg==}
+    peerDependencies:
+      '@trpc/server': 11.0.0-rc.716+77c939a3d
+      typescript: '>=5.7.2'
 
   '@trpc/server@11.0.0-rc.716':
     resolution: {integrity: sha512-2dvUMxoSqTAqdNNUGQHg+8B7hYFkeC8uKJTwKNz27w0MiYM2+fNvo8Qt2m4LijFPk9SKR9GFP+UAqfOEY8DCpw==}
@@ -574,6 +586,11 @@ snapshots:
     optional: true
 
   '@opentelemetry/api@1.9.0': {}
+
+  '@trpc/client@11.0.0-rc.716(@trpc/server@11.0.0-rc.716(typescript@5.7.3))(typescript@5.7.3)':
+    dependencies:
+      '@trpc/server': 11.0.0-rc.716(typescript@5.7.3)
+      typescript: 5.7.3
 
   '@trpc/server@11.0.0-rc.716(typescript@5.7.3)':
     dependencies:
