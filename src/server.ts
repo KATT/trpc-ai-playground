@@ -146,31 +146,49 @@ const appRouter = router({
   }),
 
   recipeStream: llmProcedure.input(z.object({ prompt: z.string() })).query(async function* (opts) {
-    const schema = z.object({
-      recipe: z.object({
-        name: z.string(),
-        ingredients: z.array(
-          z.object({
-            name: z.string(),
-            amount: z.string(),
-          })
-        ),
-        steps: z.array(z.string()),
-      }),
+    const loadingStream = run(() => {
+      const loading = streamText({
+        model: opts.ctx.model,
+        messages: [
+          {
+            role: 'system',
+            content: [
+              'You are a helpful assistant that generates recipes.',
+              'You are just going to give a short message here while a longer LLM is running to generate the actual recipe.',
+              'Just 1 line is enough while loading',
+              'Emojis are fun!',
+            ].join('\n'),
+          },
+          { role: 'user', content: opts.input.prompt },
+        ],
+      });
+      return loading.textStream;
     });
 
-    const res = streamObject({
-      model: opts.ctx.model,
-      schema,
-      prompt: opts.input.prompt,
-      system: 'You are a helpful assistant that generates recipes.',
+    const structuredStream = run(() => {
+      const schema = z.object({
+        recipe: z.object({
+          name: z.string(),
+          ingredients: z.array(
+            z.object({
+              name: z.string(),
+              amount: z.string(),
+            })
+          ),
+          steps: z.array(z.string()),
+        }),
+      });
+      return streamObject({
+        model: opts.ctx.model,
+        schema,
+        prompt: opts.input.prompt,
+        system: 'You are a helpful assistant that generates recipes.',
+      });
     });
 
-    for await (const chunk of res.partialObjectStream) {
-      yield chunk;
-      process.stdout.write(JSON.stringify(chunk, null, 2));
-      // await new Promise(resolve => setTimeout(resolve, 100));
-    }
+    yield* loadingStream;
+    yield '\n';
+    yield* structuredStream.partialObjectStream;
   }),
 });
 

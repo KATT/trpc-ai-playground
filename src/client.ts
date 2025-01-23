@@ -92,8 +92,11 @@ async function structuredRecipeStreamDemo() {
   const res = await client.recipeStream.query({ prompt });
 
   for await (const chunk of res) {
-    console.clear();
-    console.dir(chunk, { depth: null });
+    if (typeof chunk === 'string') {
+      process.stdout.write(chunk);
+    } else {
+      console.dir(chunk, { depth: 1 });
+    }
   }
 
   console.log('\n');
