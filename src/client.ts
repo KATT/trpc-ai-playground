@@ -79,5 +79,7 @@ async function structuredRecipeDemo() {
 }
 
 await askDemo();
+console.log('\n\n');
 await promptDemo();
+console.log('\n\n');
 await structuredRecipeDemo();

@@ -7,23 +7,29 @@ import { z } from 'zod';
 import { env } from './env';
 
 // Available models
+const models = (() => {
+  const lmstudio = createOpenAICompatible({
+    name: 'lmstudio',
+    baseURL: env.LMSTUDIO_URL,
+  });
 
-const lmstudio = createOpenAICompatible({
-  name: 'lmstudio',
-  baseURL: env.LMSTUDIO_URL,
-});
+  const record = {
+    'claude-3-5-haiku-latest': anthropic('claude-3-5-haiku-latest'),
+    'claude-3-5-sonnet-latest': anthropic('claude-3-5-sonnet-latest'),
+    'llama-3.2-3b-instruct': lmstudio('llama-3.2-3b-instruct'),
+  } as const satisfies Record<string, LanguageModelV1>;
 
-const modelMap = {
-  'claude-3-5-haiku-latest': anthropic('claude-3-5-haiku-latest'),
-  'claude-3-5-sonnet-latest': anthropic('claude-3-5-sonnet-latest'),
-  'llama-3.2-3b-instruct': lmstudio('llama-3.2-3b-instruct'),
-} as const satisfies Record<string, LanguageModelV1>;
+  function zodEnumFromObjKeys<K extends string>(obj: Record<K, any>): z.ZodEnum<[K, ...K[]]> {
+    return z.enum(Object.keys(obj) as [K, ...K[]]);
+  }
 
-function zodEnumFromObjKeys<K extends string>(obj: Record<K, any>): z.ZodEnum<[K, ...K[]]> {
-  return z.enum(Object.keys(obj) as [K, ...K[]]);
-}
+  const schema = zodEnumFromObjKeys(record);
 
-const modelSchema = zodEnumFromObjKeys(modelMap);
+  return {
+    schema,
+    record,
+  };
+})();
 
 // Initialize tRPC
 const t = initTRPC.context<Record<string, unknown>>().create();
@@ -32,7 +38,7 @@ const publicProcedure = t.procedure;
 
 const llmProcedure = publicProcedure.input(
   z.object({
-    model: modelSchema.default('claude-3-5-haiku-latest'),
+    model: models.schema.default('claude-3-5-haiku-latest'),
   })
 );
 
@@ -46,7 +52,7 @@ const appRouter = router({
     )
     .query(opts => {
       const response = streamText({
-        model: modelMap[opts.input.model],
+        model: models.record[opts.input.model],
         prompt: opts.input.prompt,
       });
 
@@ -60,7 +66,7 @@ const appRouter = router({
     )
     .query(opts => {
       const response = streamText({
-        model: modelMap[opts.input.model],
+        model: models.record[opts.input.model],
         messages: [
           // System prompt
           {
@@ -78,7 +84,7 @@ const appRouter = router({
   recipe: llmProcedure.input(z.object({ prompt: z.string() })).query(async opts => {
     async function getLoading() {
       const loading = streamText({
-        model: modelMap[opts.input.model],
+        model: models.record[opts.input.model],
         messages: [
           {
             role: 'system',
@@ -107,7 +113,7 @@ const appRouter = router({
       });
 
       const res = await generateObject({
-        model: modelMap[opts.input.model],
+        model: models.record[opts.input.model],
         schema,
         prompt: opts.input.prompt,
       });
