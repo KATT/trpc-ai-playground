@@ -13,8 +13,10 @@ async function answerMyQuestion(opts: { prompt: string }) {
   return response;
 }
 
-const res = await answerMyQuestion({ prompt: 'What is the capital of France?' });
+const res = await answerMyQuestion({
+  prompt: 'What is the capital of France?',
+});
 
 for await (const chunk of res.textStream) {
-  console.log(chunk);
+  process.stdout.write(chunk);
 }
