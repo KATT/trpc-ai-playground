@@ -1,9 +1,9 @@
-import { createHTTPServer } from '@trpc/server/adapters/standalone';
-import { initTRPC } from '@trpc/server';
 import { anthropic } from '@ai-sdk/anthropic';
+import { initTRPC } from '@trpc/server';
+import { createHTTPServer } from '@trpc/server/adapters/standalone';
 import { streamText } from 'ai';
-import { env } from './env';
 import { z } from 'zod';
+import { env } from './env';
 
 // Initialize model
 const model = anthropic('claude-3-5-haiku-latest');
@@ -18,13 +18,17 @@ const appRouter = router({
   chat: publicProcedure
     .input(
       z.object({
-        prompt: z.string(),
+        messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() })),
       })
     )
     .mutation(async ({ input }) => {
       const response = streamText({
         model,
-        prompt: input.prompt,
+        messages: [
+          // System prompt
+          { role: 'system', content: 'You respond short riddles without answer or clues' },
+          ...input.messages,
+        ],
       });
 
       return response.textStream;
@@ -38,6 +42,9 @@ export type AppRouter = typeof appRouter;
 const server = createHTTPServer({
   router: appRouter,
   createContext: () => ({}),
+  onError: opts => {
+    console.error(opts.error);
+  },
 });
 
 // Start server

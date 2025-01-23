@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "tsx watch src/server.ts",
-    "dev:client": "tsx watch src/entry.ts",
+    "dev:client": "tsx watch src/client.ts",
     "format": "prettier --write \"**/*\""
   },
   "keywords": [],
