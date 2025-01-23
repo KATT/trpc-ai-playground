@@ -47,16 +47,16 @@ async function askDemo() {
         messages.push({ role: 'user', content: question });
 
         process.stdout.write('Response: ');
-        loading.start();
+        const stopLoading = loading();
         const res = await client.chat.query({
           messages,
           // model: 'lmstudio-default',
         });
-        loading.stop();
 
         let allChunks: string[] = [];
 
         for await (const chunk of res) {
+          stopLoading();
           process.stdout.write(chunk);
           allChunks.push(chunk);
         }
@@ -72,36 +72,38 @@ async function askDemo() {
 
   await chat.ask('What is the capital of France?');
   await chat.ask('What is the capital of the UK?');
+  await chat.ask('Summarize the conversation so far.');
 }
 
 const loading = (() => {
   const spinner = ['◜', '◠', '◝', '◞', '◡', '◟'];
-
   let interval: NodeJS.Timeout | null = null;
 
-  return {
-    start() {
-      if (interval) return;
-      let first = true;
-      let currentIndex = 0;
-      function writeSpinner() {
-        if (!first) {
-          process.stdout.write('\b');
-        }
-        process.stdout.write(spinner[currentIndex]!);
-        currentIndex = (currentIndex + 1) % spinner.length;
-        first = false;
+  return function start() {
+    if (interval) {
+      throw new Error('Loading spinner is already running');
+    }
+
+    let first = true;
+    let currentIndex = 0;
+    function writeSpinner() {
+      if (!first) {
+        process.stdout.write('\b');
       }
-      writeSpinner();
-      interval = setInterval(writeSpinner, 50);
-    },
-    stop() {
+      process.stdout.write(spinner[currentIndex]!);
+      currentIndex = (currentIndex + 1) % spinner.length;
+      first = false;
+    }
+    writeSpinner();
+    interval = setInterval(writeSpinner, 75);
+
+    return () => {
       if (!interval) return;
       clearInterval(interval);
       interval = null;
       process.stdout.write('\b'); // Clear the spinner character
       process.stdout.write('\x1B[?25h'); // Show cursor
-    },
+    };
   };
 })();
 
@@ -110,14 +112,14 @@ async function promptDemo() {
 
   process.stdout.write(prompt + '\n');
   process.stdout.write('Response: ');
-  loading.start();
+  const stopLoading = loading();
   const res = await client.prompt.query({
     prompt,
     // model: 'lmstudio-default',
   });
 
   for await (const chunk of res) {
-    loading.stop();
+    stopLoading();
     process.stdout.write(chunk);
   }
 }
@@ -126,11 +128,11 @@ async function structuredRecipeDemo() {
   const prompt = 'Give me a recipe for a chocolate cake.';
 
   process.stdout.write(prompt + '\n');
-  loading.start();
+  const stopLoading = loading();
   const res = await client.recipeObject.query({ prompt });
 
   for await (const chunk of res.loading) {
-    loading.stop();
+    stopLoading();
     process.stdout.write(chunk);
   }
 
@@ -143,11 +145,11 @@ async function structuredRecipeStreamDemo() {
   const prompt = 'Give me a recipe for a chocolate cake.';
 
   process.stdout.write(prompt + '\n');
-  loading.start();
+  const stopLoading = loading();
   const res = await client.recipeStream.query({ prompt });
 
   for await (const chunk of res.loading) {
-    loading.stop();
+    stopLoading();
     process.stdout.write(chunk);
   }
 
@@ -180,9 +182,9 @@ async function sentimentDemo() {
 
   for (const text of texts) {
     process.stdout.write(`Analyzing: "${text}"\n`);
-    loading.start();
+    const stopLoading = loading();
     const sentiment = await client.sentiment.query({ text });
-    loading.stop();
+    stopLoading();
     console.log(`Sentiment: ${sentiment}\n`);
   }
 }
@@ -191,9 +193,9 @@ async function usersDemo() {
   const prompt = 'Generate 3 users who work in tech companies';
 
   process.stdout.write(`${prompt}\n`);
-  loading.start();
+  const stopLoading = loading();
   const users = await client.users.query({ prompt });
-  loading.stop();
+  stopLoading();
   console.log(inspect(users, { depth: null, colors: true }));
 }
 
@@ -207,14 +209,14 @@ async function imageDemo() {
     process.stdout.write(`Describing image: ${imageUrl}\n`);
 
     process.stdout.write('Description: ');
-    loading.start();
+    const stopLoading = loading();
     const description = await client.describeImage.query({
       imageUrl,
       model: 'claude-3-5-sonnet-latest',
     });
 
     for await (const chunk of description) {
-      loading.stop();
+      stopLoading();
       process.stdout.write(chunk);
     }
     process.stdout.write('\n\n');
@@ -235,9 +237,9 @@ async function pdfDemo() {
     );
     formData.append('model', 'claude-3-5-sonnet-latest');
 
-    loading.start();
+    const stopLoading = loading();
     const data = await client.extractInvoice.mutate(formData);
-    loading.stop();
+    stopLoading();
 
     console.log(inspect(data, { depth: null, colors: true }));
   } catch (error) {
@@ -247,11 +249,11 @@ async function pdfDemo() {
 
 // await promptDemo();
 // console.log('\n\n');
-// await askDemo();
+await askDemo();
 // console.log('\n\n');
 // await structuredRecipeDemo();
 // await structuredRecipeStreamDemo();
 // await sentimentDemo();
 // await usersDemo();
-await imageDemo();
+// await imageDemo();
 // await pdfDemo();
