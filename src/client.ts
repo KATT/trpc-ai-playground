@@ -46,12 +46,13 @@ async function askDemo() {
         process.stdout.write(`Asking: ${question}\n`);
         messages.push({ role: 'user', content: question });
 
-        process.stdout.write('... ');
+        process.stdout.write('Response: ');
+        loading.start();
         const res = await client.chat.query({
           messages,
           // model: 'lmstudio-default',
         });
-        process.stdout.write('response:\n');
+        loading.stop();
 
         let allChunks: string[] = [];
 
@@ -73,17 +74,50 @@ async function askDemo() {
   await chat.ask('What is the capital of the UK?');
 }
 
+const loading = (() => {
+  const spinner = ['◜', '◠', '◝', '◞', '◡', '◟'];
+
+  let interval: NodeJS.Timeout | null = null;
+
+  return {
+    start() {
+      if (interval) return;
+      let first = true;
+      let currentIndex = 0;
+      function writeSpinner() {
+        if (!first) {
+          process.stdout.write('\b');
+        }
+        process.stdout.write(spinner[currentIndex]!);
+        currentIndex = (currentIndex + 1) % spinner.length;
+        first = false;
+      }
+      writeSpinner();
+      interval = setInterval(writeSpinner, 50);
+    },
+    stop() {
+      if (!interval) return;
+      clearInterval(interval);
+      interval = null;
+      process.stdout.write('\b'); // Clear the spinner character
+      process.stdout.write('\x1B[?25h'); // Show cursor
+    },
+  };
+})();
+
 async function promptDemo() {
   const prompt = 'What is the capital of France? Give a really long-winded answer.';
 
   process.stdout.write(prompt + '\n');
-
+  process.stdout.write('Response: ');
+  loading.start();
   const res = await client.prompt.query({
     prompt,
     // model: 'lmstudio-default',
   });
 
   for await (const chunk of res) {
+    loading.stop();
     process.stdout.write(chunk);
   }
 }
@@ -92,10 +126,11 @@ async function structuredRecipeDemo() {
   const prompt = 'Give me a recipe for a chocolate cake.';
 
   process.stdout.write(prompt + '\n');
-
+  loading.start();
   const res = await client.recipeObject.query({ prompt });
 
   for await (const chunk of res.loading) {
+    loading.stop();
     process.stdout.write(chunk);
   }
 
@@ -108,10 +143,11 @@ async function structuredRecipeStreamDemo() {
   const prompt = 'Give me a recipe for a chocolate cake.';
 
   process.stdout.write(prompt + '\n');
-
+  loading.start();
   const res = await client.recipeStream.query({ prompt });
 
   for await (const chunk of res.loading) {
+    loading.stop();
     process.stdout.write(chunk);
   }
 
@@ -144,7 +180,9 @@ async function sentimentDemo() {
 
   for (const text of texts) {
     process.stdout.write(`Analyzing: "${text}"\n`);
+    loading.start();
     const sentiment = await client.sentiment.query({ text });
+    loading.stop();
     console.log(`Sentiment: ${sentiment}\n`);
   }
 }
@@ -153,7 +191,9 @@ async function usersDemo() {
   const prompt = 'Generate 3 users who work in tech companies';
 
   process.stdout.write(`${prompt}\n`);
+  loading.start();
   const users = await client.users.query({ prompt });
+  loading.stop();
   console.log(inspect(users, { depth: null, colors: true }));
 }
 
@@ -165,12 +205,16 @@ async function imageDemo() {
 
   for (const imageUrl of imageUrls) {
     process.stdout.write(`Describing image: ${imageUrl}\n`);
+
+    process.stdout.write('Description: ');
+    loading.start();
     const description = await client.describeImage.query({
       imageUrl,
       model: 'claude-3-5-sonnet-latest',
     });
-    process.stdout.write('Description: ');
+
     for await (const chunk of description) {
+      loading.stop();
       process.stdout.write(chunk);
     }
     process.stdout.write('\n\n');
@@ -191,7 +235,9 @@ async function pdfDemo() {
     );
     formData.append('model', 'claude-3-5-sonnet-latest');
 
+    loading.start();
     const data = await client.extractInvoice.mutate(formData);
+    loading.stop();
 
     console.log(inspect(data, { depth: null, colors: true }));
   } catch (error) {
