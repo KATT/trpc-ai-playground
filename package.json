@@ -1,0 +1,21 @@
+{
+  "name": "ai-playground",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/entry.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "engines": {
+    "node": "22.11.0",
+    "@types/node": "^22.10.9"
+  },
+  "packageManager": "pnpm@9.12.2",
+  "dependencies": {
+    "tsx": "^4.19.2"
+  }
+}
