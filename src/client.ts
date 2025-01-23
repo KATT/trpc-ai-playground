@@ -129,10 +129,19 @@ async function sentimentDemo() {
   }
 }
 
+async function usersDemo() {
+  const prompt = 'Generate 3 users who work in tech companies';
+
+  process.stdout.write(`${prompt}\n`);
+  const users = await client.users.query({ prompt });
+  console.log(inspect(users, { depth: null, colors: true }));
+}
+
 // await promptDemo();
 // console.log('\n\n');
 // await askDemo();
 // console.log('\n\n');
 // await structuredRecipeDemo();
 // await structuredRecipeStreamDemo();
-await sentimentDemo();
+// await sentimentDemo();
+await usersDemo();

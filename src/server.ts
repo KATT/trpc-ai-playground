@@ -219,6 +219,27 @@ const appRouter = router({
 
     return res.object;
   }),
+
+  users: llmProcedure.input(z.object({ prompt: z.string() })).query(async opts => {
+    const userSchema = z.object({
+      name: z.string().describe('Full name of the user'),
+      age: z.number().describe('Age of the user between 18 and 80'),
+      email: z.string().email().describe('A valid email address'),
+      occupation: z.string().describe("The user's job or profession"),
+      city: z.string().describe('A city in the UK'),
+    });
+
+    const res = await generateObject({
+      model: opts.ctx.model,
+      schema: userSchema,
+      output: 'array',
+      prompt: opts.input.prompt,
+      system:
+        'You are generating realistic fake user data for UK residents. Create diverse, believable profiles.',
+    });
+
+    return res.object;
+  }),
 });
 
 // Export type definition of API
