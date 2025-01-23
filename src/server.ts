@@ -10,7 +10,7 @@ import { env } from './env';
 
 const lmstudio = createOpenAICompatible({
   name: 'lmstudio',
-  baseURL: `http://localhost:1234/v1`,
+  baseURL: env.LMSTUDIO_URL,
 });
 
 const modelMap = {
