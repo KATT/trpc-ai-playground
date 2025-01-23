@@ -21,13 +21,13 @@ const appRouter = router({
         messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() })),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async opts => {
       const response = streamText({
         model,
         messages: [
           // System prompt
           { role: 'system', content: 'You respond short riddles without answer or clues' },
-          ...input.messages,
+          ...opts.input.messages,
         ],
       });
 
