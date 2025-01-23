@@ -187,8 +187,18 @@ const appRouter = router({
     });
 
     yield* loadingStream;
-    yield '\n';
-    yield* structuredStream.partialObjectStream;
+    yield '\n\n';
+    for await (const chunk of structuredStream.partialObjectStream) {
+      yield chunk;
+
+      // console.log({
+      //   name: chunk.recipe?.name,
+      //   ingredients: chunk.recipe?.ingredients?.length ?? 0,
+      //   steps: chunk.recipe?.steps?.length ?? 0,
+      // });
+      // Adds artificial delay to make the stream more readable
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
   }),
 });
 

@@ -91,11 +91,26 @@ async function structuredRecipeStreamDemo() {
 
   const res = await client.recipeStream.query({ prompt });
 
+  let lastNumberOfLinesToClear = 0;
   for await (const chunk of res) {
     if (typeof chunk === 'string') {
+      // We first get a loading message
       process.stdout.write(chunk);
     } else {
-      console.dir(chunk, { depth: 1 });
+      // Then we get a bunch of chunks with the actual recipe
+      // We need to clear the previous lines to make the output more readable
+      if (lastNumberOfLinesToClear > 0) {
+        process.stdout.moveCursor(0, -lastNumberOfLinesToClear);
+        process.stdout.clearScreenDown();
+      }
+
+      const output = inspect(chunk, { depth: null });
+      process.stdout.write(output);
+      lastNumberOfLinesToClear = output.split('\n').length;
+      process.stdout.write('\n');
+
+      // add artificial delay
+      // await new Promise(resolve => setTimeout(resolve, 10));
     }
   }
 
