@@ -145,60 +145,61 @@ const appRouter = router({
     };
   }),
 
-  recipeStream: llmProcedure.input(z.object({ prompt: z.string() })).query(async function* (opts) {
-    const loadingStream = run(() => {
-      const loading = streamText({
-        model: opts.ctx.model,
-        messages: [
-          {
-            role: 'system',
-            content: [
-              'You are a helpful assistant that generates recipes.',
-              'You are just going to give a short message here while a longer LLM is running to generate the actual recipe.',
-              'Just 1 line is enough while loading',
-              'Emojis are fun!',
-            ].join('\n'),
-          },
-          { role: 'user', content: opts.input.prompt },
-        ],
-      });
-      return loading.textStream;
-    });
+  recipeStream: llmProcedure.input(z.object({ prompt: z.string() })).query(async opts => {
+    return {
+      /**
+       * A nice loading message while the full recipe is being generated
+       */
+      loading: run(() => {
+        const loading = streamText({
+          model: opts.ctx.model,
+          messages: [
+            {
+              role: 'system',
+              content: [
+                'You are a helpful assistant that generates recipes.',
+                'You are just going to give a short message here while a longer LLM is running to generate the actual recipe.',
+                'Just 1 line is enough while loading',
+                'Emojis are fun!',
+              ].join('\n'),
+            },
+            { role: 'user', content: opts.input.prompt },
+          ],
+        });
+        return loading.textStream;
+      }),
+      recipe: run(async function* () {
+        const schema = z.object({
+          recipe: z.object({
+            name: z.string(),
+            ingredients: z.array(
+              z.object({
+                name: z.string(),
+                amount: z.string(),
+              })
+            ),
+            steps: z.array(z.string()),
+          }),
+        });
+        const stream = streamObject({
+          model: opts.ctx.model,
+          schema,
+          prompt: opts.input.prompt,
+          system: 'You are a helpful assistant that generates recipes.',
+        });
 
-    const structuredStream = run(() => {
-      const schema = z.object({
-        recipe: z.object({
-          name: z.string(),
-          ingredients: z.array(
-            z.object({
-              name: z.string(),
-              amount: z.string(),
-            })
-          ),
-          steps: z.array(z.string()),
-        }),
-      });
-      return streamObject({
-        model: opts.ctx.model,
-        schema,
-        prompt: opts.input.prompt,
-        system: 'You are a helpful assistant that generates recipes.',
-      });
-    });
-
-    yield* loadingStream;
-    yield '\n\n';
-    for await (const chunk of structuredStream.partialObjectStream) {
-      yield chunk;
-
-      // console.log({
-      //   name: chunk.recipe?.name,
-      //   ingredients: chunk.recipe?.ingredients?.length ?? 0,
-      //   steps: chunk.recipe?.steps?.length ?? 0,
-      // });
-      // Adds artificial delay to make the stream more readable
-      await new Promise(resolve => setTimeout(resolve, 10));
-    }
+        for await (const chunk of stream.partialObjectStream) {
+          // console.log({
+          //   name: chunk.recipe?.name,
+          //   ingredients: chunk.recipe?.ingredients?.length ?? 0,
+          //   steps: chunk.recipe?.steps?.length ?? 0,
+          // });
+          // Adds artificial delay to make the stream more readable
+          await new Promise(resolve => setTimeout(resolve, 10));
+          yield chunk;
+        }
+      }),
+    };
   }),
 });
 
