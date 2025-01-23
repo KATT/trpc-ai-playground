@@ -110,9 +110,6 @@ async function structuredRecipeStreamDemo() {
     process.stdout.write(output);
     lastNumberOfLinesToClear = output.split('\n').length;
     process.stdout.write('\n');
-
-    // add artificial delay
-    // await new Promise(resolve => setTimeout(resolve, 10));
   }
 
   console.log('\n');
