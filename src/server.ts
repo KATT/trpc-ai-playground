@@ -218,9 +218,9 @@ const appRouter = router({
             //   ingredients: chunk.recipe?.ingredients?.length ?? 0,
             //   steps: chunk.recipe?.steps?.length ?? 0,
             // });
-            // Adds artificial delay to make the progress more readable
-            await new Promise(resolve => setTimeout(resolve, 10));
             yield chunk;
+            // Adds artificial delay to make the output less chaotic
+            await new Promise(resolve => setTimeout(resolve, 20));
           }
         }),
       };
