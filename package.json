@@ -4,9 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "tsx watch src/server.ts",
-    "dev:client": "tsx watch src/client.ts",
+    "dev-server": "tsx watch src/server.ts",
+    "dev-client": "tsx watch src/client.ts",
     "format": "prettier --write \"**/*\""
   },
   "keywords": [],
@@ -27,7 +26,6 @@
     "@types/node": "^22.10.9",
     "add": "^2.0.6",
     "ai": "^4.1.2",
-    "concurrently": "^8.2.2",
     "dotenv": "^16.4.7",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",

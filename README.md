@@ -32,15 +32,16 @@ Uncomment the one you want to play with at the bottom of [src/client.ts](./src/c
 git clone git@github.com:KATT/trpc-ai-playground.git
 cd trpc-ai-playground
 pnpm install
+cp .env.example .env
 ```
 
-1. Copy `.env.example` to `.env` and fill in your API keys.
-2. Run the server: `pnpm dev:server`
-3. Run the client: `pnpm dev:client`
+1. Open `.env` and fill in your API keys.
+2. In terminal 1, run the server: `pnpm dev-server`
+3. In terminal 2, run the client: `pnpm dev-client`
 
 > [!NOTE]
 >
-> Ensure your use the workspace's version of TypeScript.
+> If you're using Cursor, ensure you use the workspace's version of TypeScript (as Cursor [ships with an old version](https://forum.cursor.com/t/bump-typescript-version-to-5-6/28370) of TypeScript)
 >
 > `CMD+SHIFT+P` → `TypeScript: Select TypeScript Version` → `Use Workspace Version`
 

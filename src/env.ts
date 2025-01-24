@@ -10,4 +10,12 @@ export const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
 });
 
-export const env = envSchema.parse(process.env);
+const res = envSchema.safeParse(process.env);
+
+if (!res.success) {
+  throw new Error('❌ Invalid environment variables - did you miss to `cp .env.example .env`?', {
+    cause: res.error,
+  });
+}
+
+export const env = res.data;
